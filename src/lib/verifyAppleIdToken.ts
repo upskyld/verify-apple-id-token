@@ -1,5 +1,4 @@
-import { createRemoteJWKSet, jwtVerify } from "jose";
-import * as jwt from "jsonwebtoken";
+import { createRemoteJWKSet, decodeJwt, jwtVerify } from "jose";
 import { VerifyAppleIdTokenParams } from "./types";
 
 export const APPLE_BASE_URL = "https://appleid.apple.com";
@@ -15,10 +14,9 @@ export const getApplePublicKey = async (kid: string, alg: string) => {
 };
 
 export const verifyToken = async (params: VerifyAppleIdTokenParams) => {
-  const decoded = jwt.decode(params.idToken, { complete: true });
-  const { kid, alg } = decoded.header;
+  const claims = decodeJwt(params.idToken);
 
-  const applePublicKey = await getApplePublicKey(kid, alg);
+  const applePublicKey = await getApplePublicKey(claims.kid as string, claims.alg as string);
   const { payload: jwtClaims } = await jwtVerify(params.idToken, applePublicKey);
 
   if (jwtClaims?.nonce !== params.nonce) {
